@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, Navigation, X, Clock } from 'lucide-react';
+import { Search, MapPin, Navigation, X, Clock, Car } from 'lucide-react';
 import { LocationPreset, Coordinates, Carpark } from '../types';
-import { POPULAR_LOCATIONS } from '../data/singaporeCarparks';
+import { POPULAR_LOCATIONS, formatDistance } from '../data/singaporeCarparks';
 
 interface SearchBarProps {
   currentLocationName: string;
@@ -49,8 +49,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       loc.area.toLowerCase().includes(trimmed)
   );
 
-  const matchingCarparks = trimmed.length >= 2
-    ? carparks
+  // Matching carparks sorted by distance
+  const matchingCarparks = trimmed.length >= 1
+    ? [...carparks]
         .filter(
           (cp) =>
             cp.name.toLowerCase().includes(trimmed) ||
@@ -58,8 +59,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             cp.code.toLowerCase().includes(trimmed) ||
             cp.area.toLowerCase().includes(trimmed)
         )
-        .slice(0, 5)
+        .sort((a, b) => (a.distance || 0) - (b.distance || 0))
+        .slice(0, 6)
     : [];
+
+  // Top nearby carparks to current location (when query is empty)
+  const nearbyCarparks = [...carparks]
+    .sort((a, b) => (a.distance || 0) - (b.distance || 0))
+    .slice(0, 4);
 
   const handleSelectPreset = (preset: LocationPreset) => {
     setQuery('');
@@ -74,6 +81,30 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     setQuery('');
     setIsOpen(false);
     onSelectCarpark(cp);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (matchingCarparks.length > 0) {
+        handleSelectCarparkItem(matchingCarparks[0]);
+      } else if (matchingPresets.length > 0) {
+        handleSelectPreset(matchingPresets[0]);
+      } else if (trimmed.length > 0) {
+        // Fallback search across all carparks
+        const fallback = carparks.find(
+          (c) =>
+            c.name.toLowerCase().includes(trimmed) ||
+            c.address.toLowerCase().includes(trimmed) ||
+            c.area.toLowerCase().includes(trimmed)
+        );
+        if (fallback) {
+          handleSelectCarparkItem(fallback);
+        }
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+    }
   };
 
   return (
@@ -96,6 +127,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
+          onKeyDown={handleKeyDown}
           placeholder={
             compact
               ? `Search near ${currentLocationName}...`
@@ -171,8 +203,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           {/* Matching Carparks */}
           {matchingCarparks.length > 0 && (
             <div className="p-2">
-              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Direct Carpark Matches
+              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>Matching Parking Lots</span>
+                <span className="text-[10px] font-normal text-slate-400">Ordered by proximity</span>
               </div>
               {matchingCarparks.map((cp) => (
                 <button
@@ -182,14 +215,72 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                   className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center justify-between transition cursor-pointer group"
                 >
                   <div className="min-w-0 pr-2">
-                    <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 truncate">
-                      {cp.name}
+                    <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 truncate flex items-center gap-1.5">
+                      <span>{cp.name}</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-slate-500 bg-slate-100 shrink-0">
+                        {cp.agency}
+                      </span>
                     </div>
-                    <div className="text-xs text-slate-500 truncate">{cp.address}</div>
+                    <div className="text-xs text-slate-500 truncate flex items-center gap-2 mt-0.5">
+                      <span>{cp.address}</span>
+                      {cp.distance !== undefined && (
+                        <span className="text-emerald-700 font-medium shrink-0">
+                          • {formatDistance(cp.distance)} away
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="shrink-0 text-right">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                      className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                        cp.availableLots > 30
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : cp.availableLots > 10
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-rose-100 text-rose-800'
+                      }`}
+                    >
+                      {cp.availableLots} lots
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* If query is empty, show Top Nearby Carparks directly */}
+          {!query && nearbyCarparks.length > 0 && (
+            <div className="p-2 bg-slate-50/50">
+              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+                <span>Nearby Parking Lots</span>
+                <span className="text-[10px] font-semibold text-emerald-700">Near {currentLocationName}</span>
+              </div>
+              {nearbyCarparks.map((cp) => (
+                <button
+                  key={cp.id}
+                  type="button"
+                  onClick={() => handleSelectCarparkItem(cp)}
+                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-white hover:shadow-2xs flex items-center justify-between transition cursor-pointer group"
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 truncate flex items-center gap-1.5">
+                      <span>{cp.name}</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-slate-500 bg-slate-200/70 shrink-0">
+                        {cp.agency}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 truncate flex items-center gap-2 mt-0.5">
+                      <span>{cp.address}</span>
+                      {cp.distance !== undefined && (
+                        <span className="text-emerald-700 font-medium shrink-0">
+                          • {formatDistance(cp.distance)} away
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span
+                      className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                         cp.availableLots > 30
                           ? 'bg-emerald-100 text-emerald-800'
                           : cp.availableLots > 10

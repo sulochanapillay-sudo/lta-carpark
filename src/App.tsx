@@ -147,6 +147,7 @@ export default function App() {
       setTargetLocation(loc.coordinates);
       setTargetLocationName(loc.name);
       setSelectedCarpark(null);
+      setMapDrawerExpanded(true);
     },
     []
   );
@@ -156,6 +157,7 @@ export default function App() {
     setSelectedCarpark(cp);
     setTargetLocation({ lat: cp.latitude, lng: cp.longitude });
     setTargetLocationName(cp.name);
+    setMapDrawerExpanded(true);
   }, []);
 
   // Handle GPS Current Location
