@@ -254,39 +254,52 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen w-full bg-slate-50 text-slate-900 font-sans overflow-hidden">
       {/* Top App Header */}
-      <header className="shrink-0 bg-white border-b border-slate-200/90 z-30 px-4 py-2.5">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+      <header className="shrink-0 bg-white border-b border-slate-200/90 z-40 px-3 sm:px-4 py-2 sm:py-2.5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2.5 sm:gap-4">
+          {/* App Brand */}
+          <div className="flex items-center gap-2 shrink-0">
             <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
               P
             </div>
-            <div>
-              <h1 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight leading-tight flex items-center gap-2">
-                SG Carpark Availability
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+            <div className="hidden md:block">
+              <h1 className="text-sm font-extrabold text-slate-900 tracking-tight leading-tight flex items-center gap-1.5">
+                SG Carpark
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                  Real-Time
+                  Live
                 </span>
               </h1>
-              <p className="text-[11px] text-slate-500 hidden sm:block">
-                Live lots across HDB, URA & commercial malls in Singapore
-              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Search Bar before Filters in the Header */}
+          <div className="flex-1 max-w-xl min-w-0">
+            <SearchBar
+              currentLocationName={targetLocationName}
+              onSelectLocation={handleSelectLocation}
+              onSelectCarpark={handleSelectCarpark}
+              onUseCurrentLocation={handleUseCurrentLocation}
+              isLocating={isLocating}
+              carparks={carparks}
+              compact
+              hideLocationPill
+            />
+          </div>
+
+          {/* Filters Button */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
               id="header-filter-btn"
               type="button"
               onClick={() => setIsFilterOpen(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer ${
                 activeFiltersCount > 0
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
                   : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Filters</span>
+              <span className="hidden sm:inline">Filters</span>
               {activeFiltersCount > 0 && (
                 <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-bold">
                   {activeFiltersCount}
@@ -302,16 +315,12 @@ export default function App() {
         {/* TAB 1: MAP VIEW */}
         {activeTab === 'map' && (
           <div className="relative w-full h-full flex flex-col">
-            {/* Floating Search Bar on Map */}
-            <div className="absolute top-3 left-3 right-3 sm:left-6 sm:right-auto sm:w-96 z-20">
-              <SearchBar
-                currentLocationName={targetLocationName}
-                onSelectLocation={handleSelectLocation}
-                onSelectCarpark={handleSelectCarpark}
-                onUseCurrentLocation={handleUseCurrentLocation}
-                isLocating={isLocating}
-                carparks={carparks}
-              />
+            {/* Active Focus Pill on Map */}
+            <div className="absolute top-3 left-3 z-20 pointer-events-none">
+              <div className="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-200/90 text-xs font-semibold text-slate-700 pointer-events-auto">
+                <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Near {targetLocationName}</span>
+              </div>
             </div>
 
             {/* Interactive Leaflet Map */}
@@ -390,16 +399,6 @@ export default function App() {
         {activeTab === 'list' && (
           <div className="w-full h-full overflow-y-auto pb-24">
             <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
-              {/* Search Bar in List View */}
-              <SearchBar
-                currentLocationName={targetLocationName}
-                onSelectLocation={handleSelectLocation}
-                onSelectCarpark={handleSelectCarpark}
-                onUseCurrentLocation={handleUseCurrentLocation}
-                isLocating={isLocating}
-                carparks={carparks}
-              />
-
               {/* Quick Agency Filters */}
               <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-1">
                 <div className="flex items-center gap-1.5">
