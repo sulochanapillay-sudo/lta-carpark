@@ -1,0 +1,10 @@
+{
+  "name": "Singapore Carpark Availability",
+  "description": "Real-time carpark lot availability, interactive map, search, and nearby parking lots across Singapore.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
