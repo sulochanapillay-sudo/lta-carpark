@@ -8,6 +8,8 @@ import {
   INITIAL_CARPARKS,
   SINGAPORE_DEFAULT_CENTER,
   calculateDistanceMeters,
+  POPULAR_LOCATIONS,
+  formatDistance,
 } from './data/singaporeCarparks';
 import { SearchBar } from './components/SearchBar';
 import { CarparkMap } from './components/CarparkMap';
@@ -25,6 +27,8 @@ import {
   ArrowUpDown,
   Radio,
   ChevronUp,
+  Search,
+  X,
 } from 'lucide-react';
 
 const STORAGE_KEY_FAVORITES = 'sg_carpark_favorites_v1';
@@ -37,6 +41,7 @@ export default function App() {
   const [targetLocation, setTargetLocation] = useState<Coordinates>(SINGAPORE_DEFAULT_CENTER);
   const [targetLocationName, setTargetLocationName] = useState<string>('Orchard Road');
   const [isLocating, setIsLocating] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Carpark Data State
   const [carparks, setCarparks] = useState<Carpark[]>(INITIAL_CARPARKS);
@@ -94,6 +99,37 @@ export default function App() {
   const filteredCarparks = useMemo(() => {
     let list = [...carparksWithDistance];
 
+    // Filter by Search Query string if entered
+    const trimmed = searchQuery.trim().toLowerCase();
+    if (trimmed) {
+      // Find matching preset keywords (e.g. if user searched "Orchard" or "Jurong" or "MBS")
+      const matchingPreset = POPULAR_LOCATIONS.find(
+        (loc) =>
+          loc.name.toLowerCase().includes(trimmed) ||
+          loc.area.toLowerCase() === trimmed ||
+          loc.keywords?.some((kw) => kw === trimmed || kw.includes(trimmed))
+      );
+
+      list = list.filter((cp) => {
+        const directMatch =
+          cp.name.toLowerCase().includes(trimmed) ||
+          cp.address.toLowerCase().includes(trimmed) ||
+          cp.code.toLowerCase().includes(trimmed) ||
+          cp.area.toLowerCase().includes(trimmed) ||
+          cp.agency.toLowerCase().includes(trimmed) ||
+          cp.carparkType.toLowerCase().includes(trimmed);
+
+        if (directMatch) return true;
+
+        // If user typed an area or location preset keyword, include carparks located in that area
+        if (matchingPreset && cp.area.toLowerCase() === matchingPreset.area.toLowerCase()) {
+          return true;
+        }
+
+        return false;
+      });
+    }
+
     // Filter by Agency
     if (filters.agency !== 'ALL') {
       list = list.filter((cp) => cp.agency === filters.agency);
@@ -111,6 +147,11 @@ export default function App() {
       list = list.filter((cp) => cp.availableLots > 5);
     }
 
+    // Filter by Minimum Lots
+    if (filters.minLots > 0) {
+      list = list.filter((cp) => cp.availableLots >= filters.minLots);
+    }
+
     // Sort
     if (filters.sortBy === 'distance') {
       list.sort((a, b) => (a.distance || 0) - (b.distance || 0));
@@ -126,7 +167,7 @@ export default function App() {
     }
 
     return list;
-  }, [carparksWithDistance, filters]);
+  }, [carparksWithDistance, filters, searchQuery]);
 
   // Favorite Carparks List
   const favoriteCarparks = useMemo(() => {
@@ -147,6 +188,7 @@ export default function App() {
       setTargetLocation(loc.coordinates);
       setTargetLocationName(loc.name);
       setSelectedCarpark(null);
+      setSearchQuery('');
       setMapDrawerExpanded(true);
     },
     []
@@ -157,6 +199,7 @@ export default function App() {
     setSelectedCarpark(cp);
     setTargetLocation({ lat: cp.latitude, lng: cp.longitude });
     setTargetLocationName(cp.name);
+    setSearchQuery('');
     setMapDrawerExpanded(true);
   }, []);
 
@@ -282,9 +325,11 @@ export default function App() {
               onSelectCarpark={handleSelectCarpark}
               onUseCurrentLocation={handleUseCurrentLocation}
               isLocating={isLocating}
-              carparks={carparks}
+              carparks={carparksWithDistance}
               compact
               hideLocationPill
+              searchQuery={searchQuery}
+              onSearchQueryChange={setSearchQuery}
             />
           </div>
 
@@ -317,12 +362,26 @@ export default function App() {
         {/* TAB 1: MAP VIEW */}
         {activeTab === 'map' && (
           <div className="relative w-full h-full flex flex-col">
-            {/* Active Focus Pill on Map */}
-            <div className="absolute top-3 left-3 z-20 pointer-events-none">
+            {/* Active Focus & Search Filter Pill on Map */}
+            <div className="absolute top-3 left-3 z-20 pointer-events-none flex flex-wrap items-center gap-1.5 max-w-[calc(100%-24px)]">
               <div className="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-200/90 text-xs font-semibold text-slate-700 pointer-events-auto">
-                <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Near {targetLocationName}</span>
+                <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="truncate">Near {targetLocationName}</span>
               </div>
+              {searchQuery && (
+                <div className="inline-flex items-center gap-1.5 bg-emerald-50/95 backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-md border border-emerald-200 text-xs font-semibold text-emerald-800 pointer-events-auto">
+                  <Search className="w-3 h-3 text-emerald-600 shrink-0" />
+                  <span className="truncate">"{searchQuery}" ({filteredCarparks.length})</span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="p-0.5 hover:bg-emerald-200/70 rounded-full transition cursor-pointer"
+                    title="Clear search filter"
+                  >
+                    <X className="w-3 h-3 text-emerald-700" />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Interactive Leaflet Map */}
@@ -342,7 +401,7 @@ export default function App() {
             {/* Bottom Floating Sheet / Nearby Drawer on Map */}
             <div
               className={`absolute left-0 right-0 bottom-14 z-20 transition-all duration-300 ${
-                mapDrawerExpanded ? 'max-h-[50vh]' : 'max-h-36 sm:max-h-40'
+                mapDrawerExpanded ? 'max-h-[52vh]' : 'max-h-36 sm:max-h-40'
               }`}
             >
               <div className="max-w-2xl mx-auto px-3">
@@ -352,45 +411,73 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setMapDrawerExpanded(!mapDrawerExpanded)}
-                      className="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-emerald-700 cursor-pointer"
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-emerald-700 cursor-pointer min-w-0"
                     >
                       <ChevronUp
-                        className={`w-4 h-4 transition-transform duration-200 ${
+                        className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
                           mapDrawerExpanded ? 'rotate-180' : ''
                         }`}
                       />
-                      <span>
+                      <span className="truncate">
                         Nearby Parking Lots ({filteredCarparks.length}) near {targetLocationName}
+                        {searchQuery && ` matching "${searchQuery}"`}
                       </span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('list')}
-                      className="text-xs font-semibold text-emerald-700 hover:underline"
-                    >
-                      View All in List →
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('list')}
+                        className="text-xs font-semibold text-emerald-700 hover:underline"
+                      >
+                        View List →
+                      </button>
+                    </div>
                   </div>
 
                   {/* Horizontal Scrollable Carpark Cards */}
-                  <div className="flex gap-3 overflow-x-auto py-2.5 no-scrollbar snap-x">
-                    {filteredCarparks.slice(0, 6).map((cp) => (
-                      <div
-                        key={cp.id}
-                        className="w-72 sm:w-80 shrink-0 snap-start"
-                      >
-                        <CarparkCard
-                          carpark={cp}
-                          isSelected={selectedCarpark?.id === cp.id}
-                          isFavorite={favoriteIds.includes(cp.id)}
-                          onSelect={(c) => setSelectedCarpark(c)}
-                          onToggleFavorite={handleToggleFavorite}
-                          onOpenDetails={handleOpenDetails}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  {filteredCarparks.length > 0 ? (
+                    <div className="flex gap-3 overflow-x-auto py-2.5 no-scrollbar snap-x">
+                      {filteredCarparks.slice(0, 8).map((cp) => (
+                        <div
+                          key={cp.id}
+                          className="w-72 sm:w-80 shrink-0 snap-start"
+                        >
+                          <CarparkCard
+                            carpark={cp}
+                            isSelected={selectedCarpark?.id === cp.id}
+                            isFavorite={favoriteIds.includes(cp.id)}
+                            onSelect={(c) => setSelectedCarpark(c)}
+                            onToggleFavorite={handleToggleFavorite}
+                            onOpenDetails={handleOpenDetails}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-5 text-center text-xs text-slate-500">
+                      <p>No parking lots found matching your query near {targetLocationName}.</p>
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="mt-2 inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-3 py-1 rounded-lg hover:bg-emerald-100 transition cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                          Clear search filter
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -400,8 +487,41 @@ export default function App() {
         {/* TAB 2: LIST VIEW */}
         {activeTab === 'list' && (
           <div className="w-full h-full overflow-y-auto pb-24">
-            <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
-              {/* Quick Agency Filters */}
+            <div className="max-w-3xl mx-auto px-4 py-4 space-y-3.5">
+              {/* Active Search & Location Banner */}
+              <div className="flex items-center justify-between bg-white border border-slate-200/90 rounded-2xl px-3.5 py-2.5 shadow-2xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-800 truncate flex items-center gap-1.5">
+                      <span>Near {targetLocationName}</span>
+                      {searchQuery && (
+                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
+                          Filter: "{searchQuery}"
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-slate-500 truncate">
+                      {filteredCarparks.length} nearby parking {filteredCarparks.length === 1 ? 'lot' : 'lots'} ranked by distance
+                    </div>
+                  </div>
+                </div>
+
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition shrink-0 cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>Clear</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Agency Filters & Sort */}
               <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-1">
                 <div className="flex items-center gap-1.5">
                   {(['ALL', 'HDB', 'URA', 'Commercial'] as const).map((ag) => (
@@ -431,9 +551,9 @@ export default function App() {
                     }
                     className="bg-white border border-slate-200 text-xs font-semibold text-slate-700 rounded-xl px-2.5 py-1.5 outline-none cursor-pointer"
                   >
-                    <option value="distance">Nearest</option>
+                    <option value="distance">Nearest First</option>
                     <option value="availability">Most Lots</option>
-                    <option value="cheapest">Cheapest</option>
+                    <option value="cheapest">Cheapest Rate</option>
                   </select>
                 </div>
               </div>
@@ -470,24 +590,27 @@ export default function App() {
               ) : (
                 <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center shadow-xs my-4">
                   <Car className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-                  <h3 className="text-base font-bold text-slate-800">No carparks match your filters</h3>
-                  <p className="text-xs text-slate-500 mt-1 mb-4">
-                    Try adjusting your operator selection, vacancy requirements, or search a different area in Singapore.
+                  <h3 className="text-base font-bold text-slate-800">No carparks match your search</h3>
+                  <p className="text-xs text-slate-500 mt-1 mb-4 max-w-sm mx-auto">
+                    {searchQuery
+                      ? `No parking lots found matching "${searchQuery}" with the current filters.`
+                      : 'Try adjusting your operator selection, vacancy requirements, or search a different area in Singapore.'}
                   </p>
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      setSearchQuery('');
                       setFilters({
                         vehicleType: 'ALL',
                         agency: 'ALL',
                         onlyAvailable: false,
                         minLots: 0,
                         sortBy: 'distance',
-                      })
-                    }
-                    className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs"
+                      });
+                    }}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer"
                   >
-                    Reset All Filters
+                    Reset Search & Filters
                   </button>
                 </div>
               )}

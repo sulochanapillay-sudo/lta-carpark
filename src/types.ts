@@ -44,6 +44,7 @@ export interface LocationPreset {
   subtitle: string;
   area: string;
   coordinates: Coordinates;
+  keywords?: string[];
 }
 
 export interface FilterOptions {

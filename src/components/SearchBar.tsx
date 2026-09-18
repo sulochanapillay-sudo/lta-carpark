@@ -12,6 +12,8 @@ interface SearchBarProps {
   carparks: Carpark[];
   compact?: boolean;
   hideLocationPill?: boolean;
+  searchQuery?: string;
+  onSearchQueryChange?: (query: string) => void;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
@@ -23,10 +25,17 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   carparks,
   compact = false,
   hideLocationPill = false,
+  searchQuery = '',
+  onSearchQueryChange,
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(searchQuery);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync external searchQuery changes
+  useEffect(() => {
+    setQuery(searchQuery);
+  }, [searchQuery]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -42,14 +51,17 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   // Filter preset locations and carparks matching query
   const trimmed = query.trim().toLowerCase();
 
-  const matchingPresets = POPULAR_LOCATIONS.filter(
-    (loc) =>
+  const matchingPresets = POPULAR_LOCATIONS.filter((loc) => {
+    if (!trimmed) return true;
+    return (
       loc.name.toLowerCase().includes(trimmed) ||
       loc.subtitle.toLowerCase().includes(trimmed) ||
-      loc.area.toLowerCase().includes(trimmed)
-  );
+      loc.area.toLowerCase().includes(trimmed) ||
+      loc.keywords?.some((kw) => kw.includes(trimmed) || trimmed.includes(kw))
+    );
+  });
 
-  // Matching carparks sorted by distance
+  // Matching carparks sorted by proximity distance
   const matchingCarparks = trimmed.length >= 1
     ? [...carparks]
         .filter(
@@ -57,10 +69,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             cp.name.toLowerCase().includes(trimmed) ||
             cp.address.toLowerCase().includes(trimmed) ||
             cp.code.toLowerCase().includes(trimmed) ||
-            cp.area.toLowerCase().includes(trimmed)
+            cp.area.toLowerCase().includes(trimmed) ||
+            cp.agency.toLowerCase().includes(trimmed) ||
+            cp.carparkType.toLowerCase().includes(trimmed)
         )
         .sort((a, b) => (a.distance || 0) - (b.distance || 0))
-        .slice(0, 6)
+        .slice(0, 8)
     : [];
 
   // Top nearby carparks to current location (when query is empty)
@@ -71,6 +85,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const handleSelectPreset = (preset: LocationPreset) => {
     setQuery('');
     setIsOpen(false);
+    onSearchQueryChange?.('');
     onSelectLocation({
       name: preset.name,
       coordinates: preset.coordinates,
@@ -80,27 +95,42 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const handleSelectCarparkItem = (cp: Carpark) => {
     setQuery('');
     setIsOpen(false);
+    onSearchQueryChange?.('');
     onSelectCarpark(cp);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setQuery(val);
+    setIsOpen(true);
+    onSearchQueryChange?.(val);
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    setIsOpen(false);
+    onSearchQueryChange?.('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (matchingCarparks.length > 0) {
+      // 1. Check if query specifically matches a location preset (e.g. "Orchard", "Jurong", "Tampines", "MBS")
+      const matchedPreset = POPULAR_LOCATIONS.find(
+        (loc) =>
+          loc.name.toLowerCase().includes(trimmed) ||
+          loc.area.toLowerCase() === trimmed ||
+          loc.keywords?.some((kw) => kw === trimmed || kw.includes(trimmed))
+      );
+
+      if (matchedPreset) {
+        handleSelectPreset(matchedPreset);
+      } else if (matchingCarparks.length > 0) {
         handleSelectCarparkItem(matchingCarparks[0]);
       } else if (matchingPresets.length > 0) {
         handleSelectPreset(matchingPresets[0]);
-      } else if (trimmed.length > 0) {
-        // Fallback search across all carparks
-        const fallback = carparks.find(
-          (c) =>
-            c.name.toLowerCase().includes(trimmed) ||
-            c.address.toLowerCase().includes(trimmed) ||
-            c.area.toLowerCase().includes(trimmed)
-        );
-        if (fallback) {
-          handleSelectCarparkItem(fallback);
-        }
+      } else {
+        setIsOpen(false);
       }
     } else if (e.key === 'Escape') {
       setIsOpen(false);
@@ -122,16 +152,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           id="carpark-search-input"
           type="text"
           value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setIsOpen(true);
-          }}
+          onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={
             compact
-              ? `Search near ${currentLocationName}...`
-              : 'Search location in Singapore (e.g. Orchard, MBS, Jurong)...'
+              ? `Search carpark or area near ${currentLocationName}...`
+              : 'Search location or carpark in Singapore (e.g. Orchard, Jem, MBS)...'
           }
           className={`w-full bg-transparent text-slate-800 placeholder-slate-400 font-medium outline-none ${
             compact ? 'text-xs sm:text-sm' : 'text-sm md:text-base'
@@ -142,8 +169,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           <button
             id="clear-search-btn"
             type="button"
-            onClick={() => setQuery('')}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition mr-1"
+            onClick={handleClear}
+            className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition mr-1 cursor-pointer"
             title="Clear search"
           >
             <X className="w-3.5 h-3.5" />
