@@ -266,16 +266,17 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             {currentLocationName}
           </span>
 
-          {/* Quick Hotspot Chips */}
+          {/* Quick Hotspot Chips Arranged by Location */}
           <div className="flex items-center gap-1.5 shrink-0 ml-1">
-            {POPULAR_LOCATIONS.slice(0, 5).map((loc) => (
+            {POPULAR_LOCATIONS.map((loc) => (
               <button
                 key={loc.name}
                 type="button"
                 onClick={() => handleSelectPreset(loc)}
-                className="px-2.5 py-0.5 rounded-full text-slate-600 hover:text-emerald-700 bg-white hover:bg-emerald-50 border border-slate-200 text-xs font-medium transition cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-slate-600 hover:text-emerald-700 bg-white hover:bg-emerald-50 border border-slate-200 text-xs font-medium transition cursor-pointer"
               >
-                {loc.name.split(' ')[0]}
+                <span>{loc.name.split(' ')[0]}</span>
+                <span className="text-[9px] text-slate-400 font-normal">({loc.region || loc.area})</span>
               </button>
             ))}
           </div>
@@ -443,11 +444,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             </div>
           )}
 
-          {/* Popular / Matching Locations */}
+          {/* Popular / Matching Locations Arranged by Location */}
           <div className="p-2">
             <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-              <span>{query ? 'Suggested Locations' : 'Popular Singapore Areas'}</span>
-              <span className="text-[10px] font-normal text-slate-400">Tap to search</span>
+              <span>{query ? 'Suggested Locations' : 'Popular Singapore Areas by Location'}</span>
+              <span className="text-[10px] font-normal text-slate-400">Tap to select area</span>
             </div>
 
             {matchingPresets.length > 0 ? (
@@ -462,14 +463,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-800">
-                      {preset.name}
+                    <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-800 flex items-center gap-2">
+                      <span>{preset.name}</span>
+                      <span className="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                        {preset.region || preset.area}
+                      </span>
                     </div>
                     <div className="text-xs text-slate-500">{preset.subtitle}</div>
                   </div>
-                  <span className="text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
-                    {preset.area}
-                  </span>
                 </button>
               ))
             ) : (

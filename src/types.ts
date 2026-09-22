@@ -39,10 +39,13 @@ export interface Coordinates {
   lng: number;
 }
 
+export type SingaporeRegion = 'Central' | 'Downtown' | 'East' | 'West' | 'North' | 'South';
+
 export interface LocationPreset {
   name: string;
   subtitle: string;
   area: string;
+  region?: SingaporeRegion;
   coordinates: Coordinates;
   keywords?: string[];
 }

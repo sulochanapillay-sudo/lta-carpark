@@ -1,4 +1,4 @@
-import { Carpark, LocationPreset } from '../types';
+import { Carpark, LocationPreset, SingaporeRegion } from '../types';
 
 export const SINGAPORE_DEFAULT_CENTER = {
   lat: 1.3008,
@@ -6,82 +6,150 @@ export const SINGAPORE_DEFAULT_CENTER = {
 };
 
 export const POPULAR_LOCATIONS: LocationPreset[] = [
+  // --- CENTRAL REGION ---
   {
     name: 'Orchard Road',
     subtitle: 'Shopping & Leisure Belt',
     area: 'Central',
+    region: 'Central',
     coordinates: { lat: 1.3048, lng: 103.8318 },
     keywords: ['orchard', 'somerset', 'dhoby ghaut', 'ion', 'takashimaya', 'ngee ann', 'emerald hill', 'central', 'scotts'],
   },
   {
+    name: 'Bugis Junction',
+    subtitle: 'Victoria St & Rochor Hub',
+    area: 'Central',
+    region: 'Central',
+    coordinates: { lat: 1.3005, lng: 103.8553 },
+    keywords: ['bugis', 'victoria', 'albert centre', 'rochor', 'middle road', 'iluma', 'bugis+'],
+  },
+  {
+    name: 'Chinatown Point',
+    subtitle: 'New Bridge Road & Outram',
+    area: 'Central',
+    region: 'Central',
+    coordinates: { lat: 1.2847, lng: 103.8443 },
+    keywords: ['chinatown', 'outram', 'new bridge', 'smith street', 'kreta ayer', 'chinatown complex'],
+  },
+
+  // --- DOWNTOWN & CBD REGION ---
+  {
     name: 'Marina Bay Sands',
     subtitle: 'Bayfront & Financial District',
     area: 'Downtown',
+    region: 'Downtown',
     coordinates: { lat: 1.2834, lng: 103.8607 },
     keywords: ['marina bay', 'mbs', 'bayfront', 'downtown', 'suntec', 'one raffles quay', 'shenton'],
-  },
-  {
-    name: 'Bugis Junction',
-    subtitle: 'Victoria St & Rochor Hub',
-    area: 'Bugis',
-    coordinates: { lat: 1.3005, lng: 103.8553 },
-    keywords: ['bugis', 'victoria', 'albert centre', 'rochor', 'middle road', 'iluma', 'bugis+'],
   },
   {
     name: 'Raffles Place',
     subtitle: 'Central Business District (CBD)',
     area: 'Downtown',
+    region: 'Downtown',
     coordinates: { lat: 1.2839, lng: 103.8515 },
     keywords: ['raffles place', 'raffles', 'cbd', 'financial district', 'one raffles quay', 'boat quay', 'collyer'],
   },
-  {
-    name: 'Chinatown Point',
-    subtitle: 'New Bridge Road & Outram',
-    area: 'Chinatown',
-    coordinates: { lat: 1.2847, lng: 103.8443 },
-    keywords: ['chinatown', 'outram', 'new bridge', 'smith street', 'kreta ayer', 'chinatown complex'],
-  },
-  {
-    name: 'Jurong East',
-    subtitle: 'Westgate & JEM Commercial Hub',
-    area: 'West',
-    coordinates: { lat: 1.3331, lng: 103.7436 },
-    keywords: ['jurong', 'jurong east', 'jem', 'westgate', 'jurong gateway', 'imm', 'west'],
-  },
-  {
-    name: 'Tampines Hub',
-    subtitle: 'Tampines Central & Our Tampines Hub',
-    area: 'East',
-    coordinates: { lat: 1.3532, lng: 103.9402 },
-    keywords: ['tampines', 'our tampines hub', 'oth', 'tampines mall', 'tampines central', 'east'],
-  },
+
+  // --- SOUTH REGION ---
   {
     name: 'VivoCity & Harbourfront',
     subtitle: 'Harbourfront & Sentosa Gateway',
     area: 'South',
+    region: 'South',
     coordinates: { lat: 1.2644, lng: 103.8222 },
     keywords: ['vivocity', 'harbourfront', 'sentosa', 'telok blangah', 'south', 'keppel'],
   },
+
+  // --- EAST REGION ---
   {
-    name: 'Ang Mo Kio Town Centre',
-    subtitle: 'AMK Hub & Ave 3 Hub',
-    area: 'North-East',
-    coordinates: { lat: 1.3691, lng: 103.8496 },
-    keywords: ['ang mo kio', 'amk', 'amk hub', 'ave 3', 'north-east', 'ang mo kio central'],
-  },
-  {
-    name: 'Woodlands Square',
-    subtitle: 'Causeway Point & Civic Centre',
-    area: 'North',
-    coordinates: { lat: 1.4361, lng: 103.7865 },
-    keywords: ['woodlands', 'causeway point', 'woodlands square', 'north', 'woodlands street 31'],
+    name: 'Tampines Hub',
+    subtitle: 'Tampines Central & Our Tampines Hub',
+    area: 'East',
+    region: 'East',
+    coordinates: { lat: 1.3532, lng: 103.9402 },
+    keywords: ['tampines', 'our tampines hub', 'oth', 'tampines mall', 'tampines central', 'east'],
   },
   {
     name: 'Jewel Changi Airport',
     subtitle: 'Airport Boulevard & Terminal Hub',
     area: 'East',
+    region: 'East',
     coordinates: { lat: 1.3602, lng: 103.9897 },
     keywords: ['jewel', 'changi', 'airport', 'terminal', 'airport boulevard', 'east'],
+  },
+
+  // --- WEST REGION ---
+  {
+    name: 'Jurong East',
+    subtitle: 'Westgate & JEM Commercial Hub',
+    area: 'West',
+    region: 'West',
+    coordinates: { lat: 1.3331, lng: 103.7436 },
+    keywords: ['jurong', 'jurong east', 'jem', 'westgate', 'jurong gateway', 'imm', 'west'],
+  },
+
+  // --- NORTH & NORTH-EAST REGION ---
+  {
+    name: 'Ang Mo Kio Town Centre',
+    subtitle: 'AMK Hub & Ave 3 Hub',
+    area: 'North',
+    region: 'North',
+    coordinates: { lat: 1.3691, lng: 103.8496 },
+    keywords: ['ang mo kio', 'amk', 'amk hub', 'ave 3', 'north-east', 'ang mo kio central', 'north'],
+  },
+  {
+    name: 'Woodlands Square',
+    subtitle: 'Causeway Point & Civic Centre',
+    area: 'North',
+    region: 'North',
+    coordinates: { lat: 1.4361, lng: 103.7865 },
+    keywords: ['woodlands', 'causeway point', 'woodlands square', 'north', 'woodlands street 31'],
+  },
+];
+
+export interface RegionGroupConfig {
+  region: SingaporeRegion;
+  label: string;
+  description: string;
+  badgeClass: string;
+}
+
+export const SINGAPORE_REGIONS: RegionGroupConfig[] = [
+  {
+    region: 'Central',
+    label: 'Central',
+    description: 'Orchard, Bugis, Chinatown',
+    badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  },
+  {
+    region: 'Downtown',
+    label: 'Downtown / CBD',
+    description: 'Marina Bay, Raffles Place',
+    badgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
+  },
+  {
+    region: 'East',
+    label: 'East',
+    description: 'Tampines, Changi Jewel',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+  },
+  {
+    region: 'West',
+    label: 'West',
+    description: 'Jurong East, Westgate, Jem',
+    badgeClass: 'bg-orange-50 text-orange-800 border-orange-200',
+  },
+  {
+    region: 'North',
+    label: 'North / NE',
+    description: 'Ang Mo Kio, Woodlands',
+    badgeClass: 'bg-teal-50 text-teal-800 border-teal-200',
+  },
+  {
+    region: 'South',
+    label: 'South',
+    description: 'VivoCity, Harbourfront, Sentosa',
+    badgeClass: 'bg-purple-50 text-purple-800 border-purple-200',
   },
 ];
 

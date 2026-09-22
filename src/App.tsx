@@ -19,6 +19,7 @@ import { FilterModal } from './components/FilterModal';
 import { BottomNav, ActiveTab } from './components/BottomNav';
 import { FavoritesView } from './components/FavoritesView';
 import { ApiConnectInfoView } from './components/ApiConnectInfoView';
+import { PopularAreasBar } from './components/PopularAreasBar';
 import {
   SlidersHorizontal,
   MapPin,
@@ -355,6 +356,14 @@ export default function App() {
             </button>
           </div>
         </div>
+
+        {/* Row 2: Popular Singapore Areas Arranged as Buttons Below Search Bar */}
+        <PopularAreasBar
+          currentLocationName={targetLocationName}
+          onSelectLocation={handleSelectLocation}
+          onUseCurrentLocation={handleUseCurrentLocation}
+          isLocating={isLocating}
+        />
       </header>
 
       {/* Main Content Area */}
