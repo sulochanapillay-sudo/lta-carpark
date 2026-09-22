@@ -289,10 +289,10 @@ export const ApiConnectInfoView: React.FC<ApiConnectInfoViewProps> = ({
                 type="button"
                 onClick={onExportCSV}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition border border-slate-200 shrink-0 cursor-pointer shadow-2xs"
-                title="Export entire dataset to CSV"
+                title="Export entire dataset to CSV (Minimum 6 Months History)"
               >
                 <Download className="w-3.5 h-3.5 text-emerald-600" />
-                Export CSV
+                Export CSV (6-Mo+)
               </button>
             )}
             <button

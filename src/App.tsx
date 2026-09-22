@@ -19,6 +19,7 @@ import { BottomNav, ActiveTab } from './components/BottomNav';
 import { FavoritesView } from './components/FavoritesView';
 import { ApiConnectInfoView } from './components/ApiConnectInfoView';
 import { PopularAreasBar } from './components/PopularAreasBar';
+import { ExportDatasetModal } from './components/ExportDatasetModal';
 import {
   SlidersHorizontal,
   MapPin,
@@ -297,24 +298,12 @@ export default function App() {
     (filters.sortBy !== 'distance' ? 1 : 0);
 
   // Export Entire Dataset to CSV
-  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [exportSuccessMessage, setExportSuccessMessage] = useState<string | null>(null);
 
-  const handleExportCSV = useCallback(() => {
-    setIsExporting(true);
-    try {
-      // Export entire dataset with distances calculated relative to target location
-      exportCarparksToCSV(carparksWithDistance);
-      setExportSuccessMessage(`Exported entire dataset (${carparksWithDistance.length} carparks) to CSV`);
-      setTimeout(() => {
-        setExportSuccessMessage(null);
-        setIsExporting(false);
-      }, 3500);
-    } catch (err) {
-      console.error('Failed to export dataset to CSV:', err);
-      setIsExporting(false);
-    }
-  }, [carparksWithDistance]);
+  const handleOpenExportModal = useCallback(() => {
+    setIsExportModalOpen(true);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen w-full bg-slate-50 text-slate-900 font-sans overflow-hidden">
@@ -369,28 +358,16 @@ export default function App() {
             <button
               id="export-csv-btn"
               type="button"
-              onClick={handleExportCSV}
-              disabled={isExporting}
-              title={`Export entire dataset (${carparksWithDistance.length} carparks) to CSV`}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer shadow-2xs ${
-                exportSuccessMessage
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
-                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-700 hover:border-slate-300'
-              }`}
+              onClick={handleOpenExportModal}
+              title="Export entire carpark dataset to CSV (Minimum 6 Months History)"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-700 hover:border-slate-300 text-xs font-semibold transition cursor-pointer shadow-2xs group"
             >
-              {exportSuccessMessage ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="hidden sm:inline">Exported!</span>
-                  <span className="sm:hidden text-[11px]">Saved</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="hidden sm:inline">Export CSV</span>
-                  <span className="sm:hidden text-[11px]">CSV</span>
-                </>
-              )}
+              <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden text-[11px]">CSV</span>
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                6-Mo+
+              </span>
             </button>
 
             {/* Filters Button */}
@@ -585,7 +562,7 @@ export default function App() {
               autoRefreshEnabled={autoRefresh}
               onToggleAutoRefresh={() => setAutoRefresh(!autoRefresh)}
               onManualRefresh={() => triggerLotFluctuation()}
-              onExportCSV={handleExportCSV}
+              onExportCSV={handleOpenExportModal}
               lastRefreshTime={lastRefreshTime}
               totalLotsInDatabase={carparks.length}
             />
@@ -627,6 +604,13 @@ export default function App() {
             sortBy: 'distance',
           })
         }
+      />
+
+      {/* Export Dataset Modal (Minimum 6 Months History) */}
+      <ExportDatasetModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        carparks={carparksWithDistance}
       />
     </div>
   );
