@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, MapPin, Navigation, X, Clock, Car, Building, Compass, Loader2 } from 'lucide-react';
 import { LocationPreset, Coordinates, Carpark, OneMapSearchResultItem } from '../types';
-import { POPULAR_LOCATIONS, formatDistance } from '../data/singaporeCarparks';
+import { POPULAR_LOCATIONS, formatDistance, getAvailabilityStatus } from '../data/singaporeCarparks';
 
 interface SearchBarProps {
   currentLocationName: string;
@@ -82,21 +82,36 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   }, []);
 
   // Filter preset locations and carparks matching query
+  // Lot availability option in dropdown: 'ALL' (both Available & Filling Fast), 'AVAILABLE', or 'FILLING'
+  const [lotAvailabilityOption, setLotAvailabilityOption] = useState<'ALL' | 'AVAILABLE' | 'FILLING'>('ALL');
+
   const trimmed = query.trim().toLowerCase();
 
-  const matchingPresets = POPULAR_LOCATIONS.filter((loc) => {
-    if (!trimmed) return true;
-    return (
-      loc.name.toLowerCase().includes(trimmed) ||
-      loc.subtitle.toLowerCase().includes(trimmed) ||
-      loc.area.toLowerCase().includes(trimmed) ||
-      loc.keywords?.some((kw) => kw.includes(trimmed) || trimmed.includes(kw))
-    );
+  // Exclude Full lots completely (user mandate: Do not show Full lots)
+  const nonFullCarparks = carparks.filter((cp) => {
+    const status = getAvailabilityStatus(cp.availableLots, cp.totalLots).status;
+    return status !== 'full';
   });
 
-  // Matching carparks sorted by proximity distance
+  const availableCount = nonFullCarparks.filter(
+    (cp) => getAvailabilityStatus(cp.availableLots, cp.totalLots).status === 'available'
+  ).length;
+
+  const fillingFastCount = nonFullCarparks.filter(
+    (cp) => getAvailabilityStatus(cp.availableLots, cp.totalLots).status === 'filling'
+  ).length;
+
+  // Filter based on user's selected availability option (Available vs Filling Fast)
+  const filteredByStatusCarparks = nonFullCarparks.filter((cp) => {
+    const status = getAvailabilityStatus(cp.availableLots, cp.totalLots).status;
+    if (lotAvailabilityOption === 'AVAILABLE') return status === 'available';
+    if (lotAvailabilityOption === 'FILLING') return status === 'filling';
+    return true; // 'ALL' shows both Available and Filling Fast
+  });
+
+  // Matching carparks sorted by proximity distance (no full lots)
   const matchingCarparks = trimmed.length >= 1
-    ? [...carparks]
+    ? [...filteredByStatusCarparks]
         .filter(
           (cp) =>
             cp.name.toLowerCase().includes(trimmed) ||
@@ -107,13 +122,23 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             cp.carparkType.toLowerCase().includes(trimmed)
         )
         .sort((a, b) => (a.distance || 0) - (b.distance || 0))
-        .slice(0, 8)
+        .slice(0, 10)
     : [];
 
-  // Top nearby carparks to current location (when query is empty)
-  const nearbyCarparks = [...carparks]
+  // Top nearby carparks to current location (no full lots)
+  const nearbyCarparks = [...filteredByStatusCarparks]
     .sort((a, b) => (a.distance || 0) - (b.distance || 0))
-    .slice(0, 4);
+    .slice(0, 6);
+
+  const matchingPresets = trimmed
+    ? POPULAR_LOCATIONS.filter(
+        (loc) =>
+          loc.name.toLowerCase().includes(trimmed) ||
+          loc.subtitle.toLowerCase().includes(trimmed) ||
+          loc.area.toLowerCase().includes(trimmed) ||
+          loc.keywords?.some((kw) => kw.includes(trimmed) || trimmed.includes(kw))
+      )
+    : [];
 
   const handleSelectPreset = (preset: LocationPreset) => {
     setQuery('');
@@ -285,106 +310,58 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
       {/* Autocomplete Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-h-[380px] overflow-y-auto z-50 divide-y divide-slate-100">
-          {/* Matching Carparks */}
-          {matchingCarparks.length > 0 && (
-            <div className="p-2">
-              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                <span>Matching Parking Lots</span>
-                <span className="text-[10px] font-normal text-slate-400">Ordered by proximity</span>
-              </div>
-              {matchingCarparks.map((cp) => (
-                <button
-                  key={cp.id}
-                  type="button"
-                  onClick={() => handleSelectCarparkItem(cp)}
-                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center justify-between transition cursor-pointer group"
-                >
-                  <div className="min-w-0 pr-2">
-                    <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 truncate flex items-center gap-1.5">
-                      <span>{cp.name}</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-slate-500 bg-slate-100 shrink-0">
-                        {cp.agency}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-500 truncate flex items-center gap-2 mt-0.5">
-                      <span>{cp.address}</span>
-                      {cp.distance !== undefined && (
-                        <span className="text-emerald-700 font-medium shrink-0">
-                          • {formatDistance(cp.distance)} away
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span
-                      className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                        cp.availableLots > 30
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : cp.availableLots > 10
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}
-                    >
-                      {cp.availableLots} lots
-                    </span>
-                  </div>
-                </button>
-              ))}
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-h-[420px] overflow-y-auto z-50 divide-y divide-slate-100">
+          {/* Availability Options Header Toolbar (Available & Filling Fast filter, No Full Lots) */}
+          <div className="p-2.5 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-0.5 hidden xs:inline">
+                Filter Lots:
+              </span>
+              <button
+                type="button"
+                onClick={() => setLotAvailabilityOption('ALL')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer border ${
+                  lotAvailabilityOption === 'ALL'
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                All Lots ({availableCount + fillingFastCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setLotAvailabilityOption('AVAILABLE')}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer border ${
+                  lotAvailabilityOption === 'AVAILABLE'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Available ({availableCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setLotAvailabilityOption('FILLING')}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer border ${
+                  lotAvailabilityOption === 'FILLING'
+                    ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
+                    : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                Filling Fast ({fillingFastCount})
+              </button>
             </div>
-          )}
 
-          {/* If query is empty, show Top Nearby Carparks directly */}
-          {!query && nearbyCarparks.length > 0 && (
-            <div className="p-2 bg-slate-50/50">
-              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
-                <span>Nearby Parking Lots</span>
-                <span className="text-[10px] font-semibold text-emerald-700">Near {currentLocationName}</span>
-              </div>
-              {nearbyCarparks.map((cp) => (
-                <button
-                  key={cp.id}
-                  type="button"
-                  onClick={() => handleSelectCarparkItem(cp)}
-                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-white hover:shadow-2xs flex items-center justify-between transition cursor-pointer group"
-                >
-                  <div className="min-w-0 pr-2">
-                    <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 truncate flex items-center gap-1.5">
-                      <span>{cp.name}</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-slate-500 bg-slate-200/70 shrink-0">
-                        {cp.agency}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-500 truncate flex items-center gap-2 mt-0.5">
-                      <span>{cp.address}</span>
-                      {cp.distance !== undefined && (
-                        <span className="text-emerald-700 font-medium shrink-0">
-                          • {formatDistance(cp.distance)} away
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span
-                      className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                        cp.availableLots > 30
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : cp.availableLots > 10
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}
-                    >
-                      {cp.availableLots} lots
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+            <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+              Full lots hidden
+            </span>
+          </div>
 
-          {/* OneMap SG Live Addresses */}
+          {/* OneMap SG Live Addresses (when user typed 2+ chars) */}
           {query.trim().length >= 2 && (onemapResults.length > 0 || isOnemapLoading) && (
-            <div className="p-2 bg-emerald-50/30">
+            <div className="p-2 bg-emerald-50/20">
               <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-800 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Compass className="w-3.5 h-3.5 text-emerald-600" />
@@ -444,41 +421,164 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             </div>
           )}
 
-          {/* Popular / Matching Locations Arranged by Location */}
-          <div className="p-2">
-            <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-              <span>{query ? 'Suggested Locations' : 'Popular Singapore Areas by Location'}</span>
-              <span className="text-[10px] font-normal text-slate-400">Tap to select area</span>
-            </div>
-
-            {matchingPresets.length > 0 ? (
-              matchingPresets.map((preset) => (
-                <button
-                  key={preset.name}
-                  type="button"
-                  onClick={() => handleSelectPreset(preset)}
-                  className="w-full text-left px-3 py-2 rounded-xl hover:bg-emerald-50/60 flex items-center gap-3 transition cursor-pointer group"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-emerald-100 text-slate-600 group-hover:text-emerald-700 flex items-center justify-center shrink-0 transition">
-                    <MapPin className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-800 flex items-center gap-2">
-                      <span>{preset.name}</span>
-                      <span className="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                        {preset.region || preset.area}
+          {/* Matching Parking Lots (No Full Lots) */}
+          {query.trim().length >= 1 && matchingCarparks.length > 0 && (
+            <div className="p-2">
+              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>Matching Parking Lots</span>
+                <span className="text-[10px] font-normal text-slate-400">
+                  {lotAvailabilityOption === 'AVAILABLE'
+                    ? 'Available only'
+                    : lotAvailabilityOption === 'FILLING'
+                    ? 'Filling Fast only'
+                    : 'Available & Filling Fast'}
+                </span>
+              </div>
+              {matchingCarparks.map((cp) => {
+                const statusInfo = getAvailabilityStatus(cp.availableLots, cp.totalLots);
+                return (
+                  <button
+                    key={cp.id}
+                    type="button"
+                    onClick={() => handleSelectCarparkItem(cp)}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center justify-between transition cursor-pointer group"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 truncate flex items-center gap-1.5">
+                        <span>{cp.name}</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-slate-500 bg-slate-100 shrink-0">
+                          {cp.agency}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 truncate flex items-center gap-2 mt-0.5">
+                        <span>{cp.address}</span>
+                        {cp.distance !== undefined && (
+                          <span className="text-emerald-700 font-medium shrink-0">
+                            • {formatDistance(cp.distance)} away
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                          statusInfo.status === 'available'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : 'bg-amber-50 text-amber-800 border-amber-200'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            statusInfo.status === 'available' ? 'bg-emerald-600' : 'bg-amber-500'
+                          }`}
+                        />
+                        <span>{cp.availableLots} lots</span>
+                        <span className="opacity-75 text-[10px]">({statusInfo.label})</span>
                       </span>
                     </div>
-                    <div className="text-xs text-slate-500">{preset.subtitle}</div>
-                  </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* When query is typed but no non-full lots match current filter */}
+          {query.trim().length >= 1 && matchingCarparks.length === 0 && (
+            <div className="p-4 text-center text-xs text-slate-500">
+              <p>
+                No parking lots matching "{query}" with{' '}
+                {lotAvailabilityOption === 'AVAILABLE'
+                  ? 'Available'
+                  : lotAvailabilityOption === 'FILLING'
+                  ? 'Filling Fast'
+                  : 'Available/Filling Fast'}{' '}
+                status.
+              </p>
+              {lotAvailabilityOption !== 'ALL' && (
+                <button
+                  type="button"
+                  onClick={() => setLotAvailabilityOption('ALL')}
+                  className="mt-2 text-xs font-semibold text-emerald-700 hover:underline cursor-pointer"
+                >
+                  Show all Available & Filling Fast lots
                 </button>
-              ))
-            ) : (
-              <div className="px-4 py-4 text-center text-xs text-slate-500">
-                No matching locations found. Press enter to search location or try 'Orchard', 'MBS', 'Jurong', 'Tampines'.
+              )}
+            </div>
+          )}
+
+          {/* If query is empty, show Top Nearby Carparks directly (No Full Lots) */}
+          {!query && nearbyCarparks.length > 0 && (
+            <div className="p-2 bg-slate-50/50">
+              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+                <span>Nearby Parking Lots</span>
+                <span className="text-[10px] font-semibold text-emerald-700">Near {currentLocationName}</span>
               </div>
-            )}
-          </div>
+              {nearbyCarparks.map((cp) => {
+                const statusInfo = getAvailabilityStatus(cp.availableLots, cp.totalLots);
+                return (
+                  <button
+                    key={cp.id}
+                    type="button"
+                    onClick={() => handleSelectCarparkItem(cp)}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-white hover:shadow-2xs flex items-center justify-between transition cursor-pointer group"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 truncate flex items-center gap-1.5">
+                        <span>{cp.name}</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded text-slate-500 bg-slate-200/70 shrink-0">
+                          {cp.agency}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 truncate flex items-center gap-2 mt-0.5">
+                        <span>{cp.address}</span>
+                        {cp.distance !== undefined && (
+                          <span className="text-emerald-700 font-medium shrink-0">
+                            • {formatDistance(cp.distance)} away
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                          statusInfo.status === 'available'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : 'bg-amber-50 text-amber-800 border-amber-200'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            statusInfo.status === 'available' ? 'bg-emerald-600' : 'bg-amber-500'
+                          }`}
+                        />
+                        <span>{cp.availableLots} lots</span>
+                        <span className="opacity-75 text-[10px]">({statusInfo.label})</span>
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* When query is empty and no nearby lots match the selected filter */}
+          {!query && nearbyCarparks.length === 0 && (
+            <div className="p-4 text-center text-xs text-slate-500">
+              <p>
+                No parking lots nearby with{' '}
+                {lotAvailabilityOption === 'AVAILABLE' ? 'Available' : 'Filling Fast'} status.
+              </p>
+              {lotAvailabilityOption !== 'ALL' && (
+                <button
+                  type="button"
+                  onClick={() => setLotAvailabilityOption('ALL')}
+                  className="mt-2 text-xs font-semibold text-emerald-700 hover:underline cursor-pointer"
+                >
+                  Show all Available & Filling Fast lots
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
