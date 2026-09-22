@@ -1,7 +1,7 @@
 import React from 'react';
-import { Map, ListFilter, Heart, Radio, Activity } from 'lucide-react';
+import { ListFilter, Heart, Radio } from 'lucide-react';
 
-export type ActiveTab = 'map' | 'list' | 'favorites' | 'api-info';
+export type ActiveTab = 'list' | 'favorites' | 'api-info';
 
 interface BottomNavProps {
   activeTab: ActiveTab;
@@ -17,12 +17,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   totalNearbyCount,
 }) => {
   const tabs = [
-    {
-      id: 'map' as ActiveTab,
-      label: 'Map View',
-      icon: Map,
-      badge: null,
-    },
     {
       id: 'list' as ActiveTab,
       label: 'Nearby Lots',
