@@ -293,7 +293,7 @@ export const ApiConnectInfoView: React.FC<ApiConnectInfoViewProps> = ({
         <div className="grid grid-cols-3 gap-2.5 pt-2 text-xs">
           <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
             <span className="text-slate-400 text-[10px] font-bold uppercase block">Carparks Tracked</span>
-            <span className="text-base font-black text-slate-800">{totalLotsInDatabase} spots</span>
+            <span className="text-base font-black text-slate-800">{totalLotsInDatabase} carparks</span>
           </div>
           <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
             <span className="text-slate-400 text-[10px] font-bold uppercase block">Last Ping</span>

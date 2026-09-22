@@ -176,7 +176,7 @@ export const CarparkDetailModal: React.FC<CarparkDetailModalProps> = ({
                     {carpark.availableLots}
                   </span>
                   <span className="text-sm font-semibold text-slate-500">
-                    / {carpark.totalLots} total spaces
+                    available lots
                   </span>
                 </div>
               </div>
@@ -208,7 +208,7 @@ export const CarparkDetailModal: React.FC<CarparkDetailModalProps> = ({
                     {b.label}
                   </span>
                   <span className="text-xs font-bold text-slate-900">
-                    {b.availableLots} / {b.totalLots}
+                    {b.availableLots} available
                   </span>
                 </div>
               ))}

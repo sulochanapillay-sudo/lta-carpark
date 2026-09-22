@@ -100,7 +100,7 @@ export const CarparkCard: React.FC<CarparkCardProps> = ({
               {carpark.availableLots}
             </span>
             <span className="text-xs text-slate-500 font-medium">
-              / {carpark.totalLots} total lots
+              available lots
             </span>
           </div>
 
