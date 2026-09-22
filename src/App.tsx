@@ -661,6 +661,8 @@ export default function App() {
       {/* Carpark Detail Modal */}
       <CarparkDetailModal
         carpark={detailModalCarpark}
+        userLocation={targetLocation}
+        userLocationName={targetLocationName}
         onClose={() => setDetailModalCarpark(null)}
         isFavorite={detailModalCarpark ? favoriteIds.includes(detailModalCarpark.id) : false}
         onToggleFavorite={handleToggleFavorite}

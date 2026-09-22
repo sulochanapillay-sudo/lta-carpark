@@ -54,3 +54,25 @@ export interface FilterOptions {
   minLots: number;
   sortBy: 'distance' | 'availability' | 'cheapest';
 }
+
+export interface OneMapSearchResultItem {
+  SEARCHVAL: string;
+  BLK_NO: string;
+  ROAD_NAME: string;
+  BUILDING: string;
+  ADDRESS: string;
+  POSTAL: string;
+  X: string;
+  Y: string;
+  LATITUDE: string;
+  LONGITUDE: string;
+}
+
+export interface OneMapRouteSummary {
+  total_time?: number; // in seconds
+  total_distance?: number; // in meters
+  start_point?: string;
+  end_point?: string;
+  route_geometry?: string;
+}
+

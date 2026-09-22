@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, Navigation, X, Clock, Car } from 'lucide-react';
-import { LocationPreset, Coordinates, Carpark } from '../types';
+import { Search, MapPin, Navigation, X, Clock, Car, Building, Compass, Loader2 } from 'lucide-react';
+import { LocationPreset, Coordinates, Carpark, OneMapSearchResultItem } from '../types';
 import { POPULAR_LOCATIONS, formatDistance } from '../data/singaporeCarparks';
 
 interface SearchBarProps {
@@ -30,12 +30,45 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const [query, setQuery] = useState(searchQuery);
   const [isOpen, setIsOpen] = useState(false);
+  const [onemapResults, setOnemapResults] = useState<OneMapSearchResultItem[]>([]);
+  const [isOnemapLoading, setIsOnemapLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync external searchQuery changes
   useEffect(() => {
     setQuery(searchQuery);
   }, [searchQuery]);
+
+  // Query OneMap API when user types in search bar with debounce
+  useEffect(() => {
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 2) {
+      setOnemapResults([]);
+      setIsOnemapLoading(false);
+      return;
+    }
+
+    setIsOnemapLoading(true);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/onemap/search?searchVal=${encodeURIComponent(trimmedQuery)}&pageNum=1`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.results)) {
+            setOnemapResults(data.results.slice(0, 5));
+          } else {
+            setOnemapResults([]);
+          }
+        }
+      } catch (err) {
+        console.warn('OneMap search error:', err);
+      } finally {
+        setIsOnemapLoading(false);
+      }
+    }, 280);
+
+    return () => clearTimeout(timeoutId);
+  }, [query]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -99,6 +132,28 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     onSelectCarpark(cp);
   };
 
+  const handleSelectOneMapItem = (item: OneMapSearchResultItem) => {
+    const lat = parseFloat(item.LATITUDE);
+    const lng = parseFloat(item.LONGITUDE);
+    const displayName =
+      item.BUILDING && item.BUILDING !== 'NIL'
+        ? item.BUILDING
+        : item.ROAD_NAME && item.ROAD_NAME !== 'NIL'
+        ? `${item.BLK_NO ? item.BLK_NO + ' ' : ''}${item.ROAD_NAME}`
+        : item.SEARCHVAL;
+
+    setQuery('');
+    setIsOpen(false);
+    onSearchQueryChange?.('');
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+      onSelectLocation({
+        name: displayName,
+        coordinates: { lat, lng },
+      });
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
@@ -109,6 +164,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const handleClear = () => {
     setQuery('');
     setIsOpen(false);
+    setOnemapResults([]);
     onSearchQueryChange?.('');
   };
 
@@ -127,6 +183,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         handleSelectPreset(matchedPreset);
       } else if (matchingCarparks.length > 0) {
         handleSelectCarparkItem(matchingCarparks[0]);
+      } else if (onemapResults.length > 0) {
+        handleSelectOneMapItem(onemapResults[0]);
       } else if (matchingPresets.length > 0) {
         handleSelectPreset(matchingPresets[0]);
       } else {
@@ -320,6 +378,68 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                   </div>
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* OneMap SG Live Addresses */}
+          {query.trim().length >= 2 && (onemapResults.length > 0 || isOnemapLoading) && (
+            <div className="p-2 bg-emerald-50/30">
+              <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-800 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5 text-emerald-600" />
+                  OneMap Singapore Addresses
+                </span>
+                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.2 rounded">
+                  {isOnemapLoading ? 'Searching OneMap...' : `${onemapResults.length} found`}
+                </span>
+              </div>
+
+              {isOnemapLoading && onemapResults.length === 0 ? (
+                <div className="flex items-center justify-center py-3 text-xs text-slate-500 gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                  <span>Looking up addresses on OneMap SG...</span>
+                </div>
+              ) : (
+                onemapResults.map((item, idx) => {
+                  const mainName =
+                    item.BUILDING && item.BUILDING !== 'NIL'
+                      ? item.BUILDING
+                      : item.ROAD_NAME && item.ROAD_NAME !== 'NIL'
+                      ? `${item.BLK_NO ? item.BLK_NO + ' ' : ''}${item.ROAD_NAME}`
+                      : item.SEARCHVAL;
+
+                  return (
+                    <button
+                      key={`${item.SEARCHVAL}-${item.POSTAL}-${idx}`}
+                      type="button"
+                      onClick={() => handleSelectOneMapItem(item)}
+                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-white hover:shadow-2xs flex items-center justify-between transition cursor-pointer group"
+                    >
+                      <div className="min-w-0 pr-2 flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-100/70 text-emerald-800 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition">
+                          <Building className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-slate-800 group-hover:text-emerald-800 truncate">
+                            {mainName}
+                          </div>
+                          <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                            {item.ADDRESS}
+                          </div>
+                        </div>
+                      </div>
+
+                      {item.POSTAL && item.POSTAL !== 'NIL' && (
+                        <div className="shrink-0 pl-1">
+                          <span className="text-[10px] font-mono font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                            S({item.POSTAL})
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })
+              )}
             </div>
           )}
 

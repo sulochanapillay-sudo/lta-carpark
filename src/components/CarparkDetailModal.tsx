@@ -1,5 +1,5 @@
-import React from 'react';
-import { Carpark } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Carpark, Coordinates } from '../types';
 import { getAvailabilityStatus, formatDistance } from '../data/singaporeCarparks';
 import {
   X,
@@ -14,10 +14,15 @@ import {
   CreditCard,
   Building2,
   Share2,
+  Compass,
+  ExternalLink,
+  Milestone,
 } from 'lucide-react';
 
 interface CarparkDetailModalProps {
   carpark: Carpark | null;
+  userLocation?: Coordinates;
+  userLocationName?: string;
   onClose: () => void;
   isFavorite: boolean;
   onToggleFavorite: (id: string) => void;
@@ -26,6 +31,8 @@ interface CarparkDetailModalProps {
 
 export const CarparkDetailModal: React.FC<CarparkDetailModalProps> = ({
   carpark,
+  userLocation,
+  userLocationName = 'Selected Location',
   onClose,
   isFavorite,
   onToggleFavorite,
@@ -33,10 +40,74 @@ export const CarparkDetailModal: React.FC<CarparkDetailModalProps> = ({
 }) => {
   if (!carpark) return null;
 
+  const [routeData, setRouteData] = useState<{
+    drivingTimeMin?: number;
+    distanceMeters?: number;
+    hasToken?: boolean;
+    routeType?: string;
+  } | null>(null);
+  const [isRoutingLoading, setIsRoutingLoading] = useState<boolean>(false);
+
   const status = getAvailabilityStatus(carpark.availableLots, carpark.totalLots);
+
+  // Fetch OneMap driving route if user location is available
+  useEffect(() => {
+    if (!userLocation || !carpark) {
+      setRouteData(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsRoutingLoading(true);
+
+    const fetchRoute = async () => {
+      try {
+        const start = `${userLocation.lat},${userLocation.lng}`;
+        const end = `${carpark.latitude},${carpark.longitude}`;
+        const res = await fetch(`/api/onemap/route?start=${start}&end=${end}&routeType=drive`);
+        const json = await res.json();
+
+        if (isMounted) {
+          if (json.success && json.data?.route_summary) {
+            const summary = json.data.route_summary;
+            setRouteData({
+              drivingTimeMin: Math.max(1, Math.round((summary.total_time || 0) / 60)),
+              distanceMeters: summary.total_distance,
+              hasToken: true,
+              routeType: 'drive',
+            });
+          } else {
+            // Unauthenticated or route not found
+            setRouteData({
+              hasToken: false,
+            });
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setRouteData({ hasToken: false });
+        }
+      } finally {
+        if (isMounted) {
+          setIsRoutingLoading(false);
+        }
+      }
+    };
+
+    fetchRoute();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userLocation?.lat, userLocation?.lng, carpark?.id]);
 
   const handleOpenGoogleMaps = () => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${carpark.latitude},${carpark.longitude}&destination_place_id=${encodeURIComponent(carpark.name)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleOpenOneMap = () => {
+    const url = `https://www.onemap.gov.sg/main/v2/?lat=${carpark.latitude}&lng=${carpark.longitude}`;
     window.open(url, '_blank');
   };
 
@@ -186,6 +257,53 @@ export const CarparkDetailModal: React.FC<CarparkDetailModalProps> = ({
             </div>
           </div>
 
+          {/* OneMap SG Real-time Route & Distance */}
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Compass className="w-4 h-4 text-emerald-600" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Route & Travel from {userLocationName}
+                </span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                OneMap SG
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className="bg-white p-3 rounded-xl border border-slate-200">
+                <div className="text-[10px] uppercase font-bold text-slate-400">Direct Distance</div>
+                <div className="text-base font-bold text-slate-800 mt-0.5">
+                  {routeData?.distanceMeters
+                    ? formatDistance(routeData.distanceMeters)
+                    : carpark.distance !== undefined
+                    ? formatDistance(carpark.distance)
+                    : 'Nearby'}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">
+                  {routeData?.distanceMeters ? 'Road distance' : 'Straight-line proximity'}
+                </div>
+              </div>
+
+              <div className="bg-white p-3 rounded-xl border border-slate-200">
+                <div className="text-[10px] uppercase font-bold text-slate-400">Drive Time</div>
+                <div className="text-base font-bold text-emerald-700 mt-0.5">
+                  {isRoutingLoading ? (
+                    <span className="text-xs text-slate-400 font-normal">Calculating...</span>
+                  ) : routeData?.drivingTimeMin ? (
+                    `~${routeData.drivingTimeMin} mins`
+                  ) : carpark.distance !== undefined ? (
+                    `~${Math.max(2, Math.round((carpark.distance / 1000) * 2.5))} mins`
+                  ) : (
+                    'Quick drive'
+                  )}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">Estimated driving duration</div>
+              </div>
+            </div>
+          </div>
+
           {/* Carpark Specs & Access */}
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center gap-2.5">
@@ -217,11 +335,20 @@ export const CarparkDetailModal: React.FC<CarparkDetailModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-slate-100 bg-white flex items-center gap-3">
+        <div className="p-4 border-t border-slate-100 bg-white flex flex-col sm:flex-row items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleOpenOneMap}
+            className="w-full sm:w-auto py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-slate-200 transition active:scale-[0.98] cursor-pointer"
+          >
+            <Compass className="w-4 h-4 text-emerald-600" />
+            Open in OneMap SG
+          </button>
+
           <button
             type="button"
             onClick={handleOpenGoogleMaps}
-            className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98] cursor-pointer"
+            className="w-full flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98] cursor-pointer"
           >
             <Navigation className="w-4 h-4" />
             Directions in Google Maps

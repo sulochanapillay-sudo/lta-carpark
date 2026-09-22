@@ -12,6 +12,7 @@ import {
   Car,
   Bus,
   Server,
+  Compass,
 } from 'lucide-react';
 
 interface ApiConnectInfoViewProps {
@@ -138,6 +139,106 @@ export const ApiConnectInfoView: React.FC<ApiConnectInfoViewProps> = ({
         </div>
       </div>
 
+      {/* OneMap Singapore API Section */}
+      <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Compass className="w-4 h-4 text-emerald-600" />
+            <h3 className="text-sm font-bold text-slate-900">
+              OneMap Singapore (SLA) Endpoints
+            </h3>
+          </div>
+          <span className="text-[10px] font-mono uppercase px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md font-semibold">
+            OneMap 2.0 API
+          </span>
+        </div>
+        <p className="text-xs text-slate-500">
+          Official Singapore Land Authority (SLA) geospatial search, routing, and reverse geocoding.
+        </p>
+
+        <div className="space-y-2 pt-1">
+          {/* Token / Auth */}
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-amber-100 text-amber-800 rounded">POST/GET</span>
+                <code className="text-xs font-bold text-slate-800">/api/onemap/token</code>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Token minting & 3-day caching using <code className="text-[10px]">ONEMAP_EMAIL</code> & <code className="text-[10px]">ONEMAP_PASSWORD</code>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => runApiTest('/api/onemap/token')}
+              className="px-2.5 py-1 text-xs font-semibold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition shadow-xs cursor-pointer"
+            >
+              Test
+            </button>
+          </div>
+
+          {/* OneMap Search */}
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 rounded">GET</span>
+                <code className="text-xs font-bold text-slate-800">/api/onemap/search?searchVal=raffles</code>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Elastic address & building search (e.g. Raffles, Orchard, postal codes)
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => runApiTest('/api/onemap/search?searchVal=raffles')}
+              className="px-2.5 py-1 text-xs font-semibold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition shadow-xs cursor-pointer"
+            >
+              Test
+            </button>
+          </div>
+
+          {/* Reverse Geocode */}
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 rounded">GET</span>
+                <code className="text-xs font-bold text-slate-800">/api/onemap/revgeocode?location=1.3048,103.8318</code>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Reverse geocodes coordinates to street & building names
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => runApiTest('/api/onemap/revgeocode?location=1.3048,103.8318')}
+              className="px-2.5 py-1 text-xs font-semibold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition shadow-xs cursor-pointer"
+            >
+              Test
+            </button>
+          </div>
+
+          {/* Routing */}
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 rounded">GET</span>
+                <code className="text-xs font-bold text-slate-800">/api/onemap/route?start=1.3048,103.8318&end=1.2834,103.8607&routeType=drive</code>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Calculates driving duration and road distance between coordinates
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => runApiTest('/api/onemap/route?start=1.3048,103.8318&end=1.2834,103.8607&routeType=drive')}
+              className="px-2.5 py-1 text-xs font-semibold rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition shadow-xs cursor-pointer"
+            >
+              Test
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Interactive Response Viewer */}
       {testResult && (
         <div className="bg-slate-900 text-slate-100 rounded-3xl p-5 shadow-lg space-y-2.5">
@@ -213,6 +314,36 @@ export const ApiConnectInfoView: React.FC<ApiConnectInfoViewProps> = ({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* OneMap SLA Credentials Info Box */}
+      <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-2">
+        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+          <Compass className="w-4 h-4 text-emerald-600" />
+          Configuring OneMap Singapore (SLA) Credentials
+        </h4>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          The server automatically requests and caches 3-day tokens from the Singapore Land Authority OneMap authentication service (<code className="bg-slate-100 text-emerald-700 px-1 py-0.5 rounded font-mono font-bold">/api/auth/post/getToken</code>).
+        </p>
+        <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+          <li>
+            Register a free developer account at{' '}
+            <a
+              href="https://www.onemap.gov.sg/apidocs/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-emerald-700 font-semibold underline inline-flex items-center gap-0.5"
+            >
+              OneMap API Docs <ExternalLink className="w-3 h-3" />
+            </a>.
+          </li>
+          <li>
+            Add <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">ONEMAP_EMAIL</code> and <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">ONEMAP_PASSWORD</code> in your <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">.env</code> or environment variables. The server will auto-mint and refresh tokens every 3 days.
+          </li>
+          <li>
+            Alternatively, set <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-800">ONEMAP_TOKEN=&lt;your-token&gt;</code> directly.
+          </li>
+        </ul>
       </div>
 
       {/* LTA DataMall Key Info Box */}
