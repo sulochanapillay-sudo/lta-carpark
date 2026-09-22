@@ -28,7 +28,10 @@ import {
   Radio,
   Search,
   X,
+  Download,
+  Check,
 } from 'lucide-react';
+import { exportCarparksToCSV } from './utils/csvExport';
 
 const STORAGE_KEY_FAVORITES = 'sg_carpark_favorites_v1';
 
@@ -293,11 +296,41 @@ export default function App() {
     (filters.onlyAvailable ? 1 : 0) +
     (filters.sortBy !== 'distance' ? 1 : 0);
 
+  // Export Entire Dataset to CSV
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportSuccessMessage, setExportSuccessMessage] = useState<string | null>(null);
+
+  const handleExportCSV = useCallback(() => {
+    setIsExporting(true);
+    try {
+      // Export entire dataset with distances calculated relative to target location
+      exportCarparksToCSV(carparksWithDistance);
+      setExportSuccessMessage(`Exported entire dataset (${carparksWithDistance.length} carparks) to CSV`);
+      setTimeout(() => {
+        setExportSuccessMessage(null);
+        setIsExporting(false);
+      }, 3500);
+    } catch (err) {
+      console.error('Failed to export dataset to CSV:', err);
+      setIsExporting(false);
+    }
+  }, [carparksWithDistance]);
+
   return (
     <div className="flex flex-col h-screen w-full bg-slate-50 text-slate-900 font-sans overflow-hidden">
+      {/* Toast Notification for CSV Export */}
+      {exportSuccessMessage && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="bg-slate-900 text-white px-4 py-2 rounded-2xl shadow-xl border border-slate-700/60 flex items-center gap-2 text-xs font-semibold">
+            <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{exportSuccessMessage}</span>
+          </div>
+        </div>
+      )}
+
       {/* Top App Header */}
       <header className="shrink-0 bg-white border-b border-slate-200/90 z-40 px-3 sm:px-4 py-2 sm:py-2.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2.5 sm:gap-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
           {/* App Brand */}
           <div className="flex items-center gap-2 shrink-0">
             <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
@@ -330,13 +363,42 @@ export default function App() {
             />
           </div>
 
-          {/* Filters Button */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Right Corner Button Options */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Export Entire Dataset to CSV Button */}
+            <button
+              id="export-csv-btn"
+              type="button"
+              onClick={handleExportCSV}
+              disabled={isExporting}
+              title={`Export entire dataset (${carparksWithDistance.length} carparks) to CSV`}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer shadow-2xs ${
+                exportSuccessMessage
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-700 hover:border-slate-300'
+              }`}
+            >
+              {exportSuccessMessage ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="hidden sm:inline">Exported!</span>
+                  <span className="sm:hidden text-[11px]">Saved</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="hidden sm:inline">Export CSV</span>
+                  <span className="sm:hidden text-[11px]">CSV</span>
+                </>
+              )}
+            </button>
+
+            {/* Filters Button */}
             <button
               id="header-filter-btn"
               type="button"
               onClick={() => setIsFilterOpen(true)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer ${
                 activeFiltersCount > 0
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
                   : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
@@ -523,6 +585,7 @@ export default function App() {
               autoRefreshEnabled={autoRefresh}
               onToggleAutoRefresh={() => setAutoRefresh(!autoRefresh)}
               onManualRefresh={() => triggerLotFluctuation()}
+              onExportCSV={handleExportCSV}
               lastRefreshTime={lastRefreshTime}
               totalLotsInDatabase={carparks.length}
             />

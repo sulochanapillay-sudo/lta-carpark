@@ -13,12 +13,14 @@ import {
   Bus,
   Server,
   Compass,
+  Download,
 } from 'lucide-react';
 
 interface ApiConnectInfoViewProps {
   autoRefreshEnabled: boolean;
   onToggleAutoRefresh: () => void;
   onManualRefresh: () => void;
+  onExportCSV?: () => void;
   lastRefreshTime: string;
   totalLotsInDatabase: number;
 }
@@ -27,6 +29,7 @@ export const ApiConnectInfoView: React.FC<ApiConnectInfoViewProps> = ({
   autoRefreshEnabled,
   onToggleAutoRefresh,
   onManualRefresh,
+  onExportCSV,
   lastRefreshTime,
   totalLotsInDatabase,
 }) => {
@@ -280,14 +283,27 @@ export const ApiConnectInfoView: React.FC<ApiConnectInfoViewProps> = ({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={onManualRefresh}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition border border-emerald-200 shrink-0 cursor-pointer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Refresh Now
-          </button>
+          <div className="flex items-center gap-2">
+            {onExportCSV && (
+              <button
+                type="button"
+                onClick={onExportCSV}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition border border-slate-200 shrink-0 cursor-pointer shadow-2xs"
+                title="Export entire dataset to CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                Export CSV
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onManualRefresh}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition border border-emerald-200 shrink-0 cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Refresh Now
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2.5 pt-2 text-xs">
