@@ -307,26 +307,13 @@ export default function App() {
     setIsExportModalOpen(true);
   }, []);
 
-  // Scroll directly to footer feedback box
+  // Navigate to comments discussion view
   const handleScrollToFeedback = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
-      if (activeTab !== 'list') {
-        setActiveTab('list');
-        setTimeout(() => {
-          const footerEl = document.getElementById('feedback-footer');
-          if (footerEl) {
-            footerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 120);
-      } else {
-        const footerEl = document.getElementById('feedback-footer');
-        if (footerEl) {
-          footerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }
+      setActiveTab((prev) => (prev === 'feedback' ? 'list' : 'feedback'));
     },
-    [activeTab]
+    []
   );
 
   return (
@@ -390,7 +377,7 @@ export default function App() {
               id="header-feedback-link"
               href="#feedback-footer"
               onClick={handleScrollToFeedback}
-              title="Leave your comments here ! :) (Connects to footer feedback box)"
+              title="Leave your comments here ! :)"
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-emerald-400 hover:decoration-emerald-700 decoration-2 underline-offset-4 px-2 sm:px-2.5 py-1.5 rounded-xl hover:bg-emerald-50 transition-all cursor-pointer shrink-0 whitespace-nowrap group"
             >
               <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
@@ -403,15 +390,12 @@ export default function App() {
               id="export-csv-btn"
               type="button"
               onClick={handleOpenExportModal}
-              title="Export entire carpark dataset to CSV (Minimum 6 Months History)"
+              title="Export carpark dataset to CSV"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-700 hover:border-slate-300 text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs group"
             >
               <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
               <span className="hidden sm:inline">Export CSV</span>
               <span className="sm:hidden text-xs">CSV</span>
-              <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                6-Mo+
-              </span>
             </button>
 
             {/* Filters Button */}
@@ -578,8 +562,18 @@ export default function App() {
                 </div>
               )}
 
-              {/* Feedback Footer embedded at the bottom of the list */}
-              <FeedbackFooter />
+              {/* Portal Footer (comments hidden in footer) */}
+              <footer className="mt-8 border-t border-slate-200/90 pt-4 pb-12 flex items-center justify-between flex-wrap gap-2 text-xs text-slate-500">
+                <span>Singapore LTA & HDB Live Carpark Availability Portal</span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('feedback')}
+                  className="text-emerald-700 hover:text-emerald-900 font-bold transition hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Leave your comments here ! :)</span>
+                </button>
+              </footer>
             </div>
           </div>
         )}
