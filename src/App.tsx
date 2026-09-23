@@ -33,6 +33,7 @@ import {
   Download,
   Check,
   MessageSquare,
+  RotateCcw,
 } from 'lucide-react';
 import { exportCarparksToCSV } from './utils/csvExport';
 
@@ -302,10 +303,41 @@ export default function App() {
   // Export Entire Dataset to CSV
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [exportSuccessMessage, setExportSuccessMessage] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const handleOpenExportModal = useCallback(() => {
     setIsExportModalOpen(true);
   }, []);
+
+  // Refresh to clear old selections and restore default view
+  const handleResetToDefault = useCallback(() => {
+    setIsRefreshing(true);
+    setSearchQuery('');
+    setTargetLocation(SINGAPORE_DEFAULT_CENTER);
+    setTargetLocationName('Orchard Road');
+    setSelectedCarpark(null);
+    setDetailModalCarpark(null);
+    setFilters({
+      vehicleType: 'ALL',
+      agency: 'ALL',
+      onlyAvailable: false,
+      minLots: 0,
+      sortBy: 'distance',
+    });
+    setActiveTab('list');
+
+    // Trigger lot fluctuation to simulate fresh live data
+    triggerLotFluctuation();
+
+    setExportSuccessMessage('Selections cleared & restored to default (Orchard Road)');
+    setTimeout(() => {
+      setExportSuccessMessage(null);
+    }, 2800);
+
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 600);
+  }, [triggerLotFluctuation]);
 
   // Navigate to comments discussion view
   const handleScrollToFeedback = useCallback(
@@ -372,6 +404,24 @@ export default function App() {
 
           {/* Right Corner Button Options */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Refresh Button to clear old selections and restore defaults */}
+            <button
+              id="header-refresh-btn"
+              type="button"
+              onClick={handleResetToDefault}
+              disabled={isRefreshing}
+              title="Refresh to clear old selections and restore default view"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-700 hover:border-slate-300 text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs group"
+            >
+              <RotateCcw
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 transition-transform ${
+                  isRefreshing ? 'animate-spin' : 'group-hover:-rotate-90'
+                }`}
+              />
+              <span className="hidden sm:inline">Refresh</span>
+              <span className="sm:hidden text-xs">Refresh</span>
+            </button>
+
             {/* Leave your comments here ! :) Hyperlink connecting to footer feedback box */}
             <a
               id="header-feedback-link"
