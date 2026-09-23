@@ -37,7 +37,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     },
     {
       id: 'feedback' as ActiveTab,
-      label: 'Feedback',
+      label: 'Comments :)',
       icon: MessageSquare,
       badge: null,
     },

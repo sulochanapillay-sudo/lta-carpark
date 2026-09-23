@@ -99,7 +99,7 @@ export const FeedbackFooter: React.FC<FeedbackFooterProps> = ({ className = '' }
             </div>
             <div>
               <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">
-                Community Feedback & Discussion
+                Leave your comments here ! :)
               </h3>
               <p className="text-xs text-slate-500">
                 Share parking updates, report lot count discrepancies, or leave feedback
