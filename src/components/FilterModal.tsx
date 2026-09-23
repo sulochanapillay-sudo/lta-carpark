@@ -69,7 +69,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
         <div className="p-5 space-y-5 overflow-y-auto max-h-[70vh]">
           {/* Agency */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">
+            <label className="text-xs font-extrabold uppercase tracking-wider text-slate-500 block mb-2">
               Carpark Operator / Agency
             </label>
             <div className="grid grid-cols-4 gap-1.5">
@@ -78,10 +78,10 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   key={agency}
                   type="button"
                   onClick={() => setLocalFilters({ ...localFilters, agency })}
-                  className={`py-2 px-2 text-xs font-semibold rounded-xl border transition ${
+                  className={`py-2.5 px-2 text-sm font-bold rounded-xl border transition ${
                     localFilters.agency === agency
                       ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
-                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   {agency}
@@ -92,7 +92,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 
           {/* Vehicle Type */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">
+            <label className="text-xs font-extrabold uppercase tracking-wider text-slate-500 block mb-2">
               Vehicle Type
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -101,14 +101,14 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   key={v.type}
                   type="button"
                   onClick={() => setLocalFilters({ ...localFilters, vehicleType: v.type })}
-                  className={`py-2 px-3 text-xs font-semibold rounded-xl border flex items-center justify-between transition ${
+                  className={`py-2.5 px-3 text-sm font-bold rounded-xl border flex items-center justify-between transition ${
                     localFilters.vehicleType === v.type
                       ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
-                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <span>{v.label}</span>
-                  {localFilters.vehicleType === v.type && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                  {localFilters.vehicleType === v.type && <Check className="w-4 h-4 text-emerald-600" />}
                 </button>
               ))}
             </div>
@@ -116,7 +116,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 
           {/* Sort By */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">
+            <label className="text-xs font-extrabold uppercase tracking-wider text-slate-500 block mb-2">
               Sort Results By
             </label>
             <div className="space-y-1.5">
@@ -125,14 +125,14 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   key={s.id}
                   type="button"
                   onClick={() => setLocalFilters({ ...localFilters, sortBy: s.id })}
-                  className={`w-full py-2.5 px-3 text-xs font-semibold rounded-xl border flex items-center justify-between transition ${
+                  className={`w-full py-2.5 px-3.5 text-sm font-bold rounded-xl border flex items-center justify-between transition ${
                     localFilters.sortBy === s.id
                       ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
-                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <span>{s.label}</span>
-                  {localFilters.sortBy === s.id && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                  {localFilters.sortBy === s.id && <Check className="w-4 h-4 text-emerald-600" />}
                 </button>
               ))}
             </div>

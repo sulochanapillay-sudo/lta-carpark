@@ -391,11 +391,11 @@ export default function App() {
               href="#feedback-footer"
               onClick={handleScrollToFeedback}
               title="Leave your comments here ! :) (Connects to footer feedback box)"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-900 underline decoration-emerald-400 hover:decoration-emerald-700 decoration-2 underline-offset-4 px-2 sm:px-2.5 py-1.5 rounded-xl hover:bg-emerald-50 transition-all cursor-pointer shrink-0 whitespace-nowrap group"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-700 hover:text-emerald-900 underline decoration-emerald-400 hover:decoration-emerald-700 decoration-2 underline-offset-4 px-2 sm:px-2.5 py-1.5 rounded-xl hover:bg-emerald-50 transition-all cursor-pointer shrink-0 whitespace-nowrap group"
             >
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
+              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
               <span className="hidden sm:inline">Leave your comments here ! :)</span>
-              <span className="sm:hidden text-[11px]">Leave your comments here ! :)</span>
+              <span className="sm:hidden text-xs">Leave your comments here ! :)</span>
             </a>
 
             {/* Export Entire Dataset to CSV Button */}
@@ -404,11 +404,11 @@ export default function App() {
               type="button"
               onClick={handleOpenExportModal}
               title="Export entire carpark dataset to CSV (Minimum 6 Months History)"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-700 hover:border-slate-300 text-xs font-semibold transition cursor-pointer shadow-2xs group"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-700 hover:border-slate-300 text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs group"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
               <span className="hidden sm:inline">Export CSV</span>
-              <span className="sm:hidden text-[11px]">CSV</span>
+              <span className="sm:hidden text-xs">CSV</span>
               <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
                 6-Mo+
               </span>
@@ -419,13 +419,13 @@ export default function App() {
               id="header-filter-btn"
               type="button"
               onClick={() => setIsFilterOpen(true)}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-bold transition cursor-pointer ${
                 activeFiltersCount > 0
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
                   : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <SlidersHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Filters</span>
               {activeFiltersCount > 0 && (
                 <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] flex items-center justify-center font-bold">
@@ -486,16 +486,16 @@ export default function App() {
 
               {/* Quick Agency Filters & Sort */}
               <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-1">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   {(['ALL', 'HDB', 'URA', 'Commercial'] as const).map((ag) => (
                     <button
                       key={ag}
                       type="button"
                       onClick={() => setFilters({ ...filters, agency: ag })}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer shrink-0 border ${
+                      className={`px-4 py-2 rounded-full text-sm sm:text-base font-bold transition cursor-pointer shrink-0 border ${
                         filters.agency === ag
                           ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                       }`}
                     >
                       {ag === 'ALL' ? 'All Operators' : ag}
@@ -504,7 +504,7 @@ export default function App() {
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+                  <span className="text-sm text-slate-500 font-bold hidden sm:inline">
                     Sort:
                   </span>
                   <select
@@ -512,7 +512,7 @@ export default function App() {
                     onChange={(e) =>
                       setFilters({ ...filters, sortBy: e.target.value as FilterOptions['sortBy'] })
                     }
-                    className="bg-white border border-slate-200 text-xs font-semibold text-slate-700 rounded-xl px-2.5 py-1.5 outline-none cursor-pointer"
+                    className="bg-white border border-slate-200 text-sm font-bold text-slate-800 rounded-xl px-3 py-2 outline-none cursor-pointer"
                   >
                     <option value="distance">Nearest First</option>
                     <option value="availability">Most Lots</option>
