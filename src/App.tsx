@@ -20,6 +20,7 @@ import { FavoritesView } from './components/FavoritesView';
 import { ApiConnectInfoView } from './components/ApiConnectInfoView';
 import { PopularAreasBar } from './components/PopularAreasBar';
 import { ExportDatasetModal } from './components/ExportDatasetModal';
+import { FeedbackFooter } from './components/FeedbackFooter';
 import {
   SlidersHorizontal,
   MapPin,
@@ -533,13 +534,16 @@ export default function App() {
                   </button>
                 </div>
               )}
+
+              {/* Feedback Footer embedded at the bottom of the list */}
+              <FeedbackFooter />
             </div>
           </div>
         )}
 
         {/* TAB 2: FAVORITES VIEW */}
         {activeTab === 'favorites' && (
-          <div className="w-full h-full overflow-y-auto">
+          <div className="w-full h-full overflow-y-auto pb-24">
             <FavoritesView
               favoriteCarparks={favoriteCarparks}
               onSelectCarpark={(cp) => {
@@ -555,9 +559,9 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: LIVE FEED & API HUB */}
+        {/* TAB 3: LIVE FEED & API HUB */}
         {activeTab === 'api-info' && (
-          <div className="w-full h-full overflow-y-auto">
+          <div className="w-full h-full overflow-y-auto pb-24">
             <ApiConnectInfoView
               autoRefreshEnabled={autoRefresh}
               onToggleAutoRefresh={() => setAutoRefresh(!autoRefresh)}
@@ -566,6 +570,15 @@ export default function App() {
               lastRefreshTime={lastRefreshTime}
               totalLotsInDatabase={carparks.length}
             />
+          </div>
+        )}
+
+        {/* TAB 4: FEEDBACK & DISCUSSION VIEW */}
+        {activeTab === 'feedback' && (
+          <div className="w-full h-full overflow-y-auto pb-24">
+            <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
+              <FeedbackFooter className="mt-0" />
+            </div>
           </div>
         )}
       </main>

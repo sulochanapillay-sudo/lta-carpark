@@ -1,7 +1,7 @@
 import React from 'react';
-import { ListFilter, Heart, Radio } from 'lucide-react';
+import { ListFilter, Heart, Radio, MessageSquare } from 'lucide-react';
 
-export type ActiveTab = 'list' | 'favorites' | 'api-info';
+export type ActiveTab = 'list' | 'favorites' | 'api-info' | 'feedback';
 
 interface BottomNavProps {
   activeTab: ActiveTab;
@@ -34,6 +34,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       label: 'Live / API',
       icon: Radio,
       badge: 'Live',
+    },
+    {
+      id: 'feedback' as ActiveTab,
+      label: 'Feedback',
+      icon: MessageSquare,
+      badge: null,
     },
   ];
 
