@@ -346,17 +346,24 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
           {/* App Brand */}
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-blue-900 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
               P
             </div>
-            <div className="hidden md:block">
-              <h1 className="text-sm font-extrabold text-slate-900 tracking-tight leading-tight flex items-center gap-1.5">
-                SG Carpark
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded-full">
+            <div>
+              <h1 className="text-xs sm:text-sm font-extrabold text-blue-900 tracking-tight leading-tight flex items-center gap-1.5 flex-wrap">
+                <span className="text-blue-950 font-black">PARKIT</span>
+                <span className="text-blue-900 font-bold hidden sm:inline">-</span>
+                <span className="text-blue-900 font-bold hidden sm:inline">
+                  LTA Real Time Carpark lot Availability
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded-full shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                   Live
                 </span>
               </h1>
+              <span className="text-[10px] text-blue-900 font-semibold sm:hidden block leading-none mt-0.5">
+                LTA Real Time Carpark lot Availability
+              </span>
             </div>
           </div>
 
